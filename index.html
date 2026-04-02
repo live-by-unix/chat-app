@@ -3,86 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TCA</title>
+    <title>Messenger | Secure P2P</title>
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/733/733585.png">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --p: #00ff88; --bg: #000; --s: #0a0a0a; --t: #fff; --b: #222; --f: 'Inter', sans-serif; }
-        * { box-sizing: border-box; font-family: var(--f); font-size: 13px; color: var(--t); transition: 0.2s ease; }
-        body { margin: 0; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
-        #auth { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; border: 4px solid var(--p); }
-        #side { width: 320px; background: var(--s); border-right: 1px solid var(--b); display: flex; flex-direction: column; z-index: 20; }
-        #stage { flex: 1; display: flex; flex-direction: column; position: relative; background: radial-gradient(circle, #050505 0%, #000 100%); }
-        #v-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; padding: 15px; min-height: 0; flex: 0; background: #000; }
-        video { width: 100%; height: 100%; object-fit: cover; background: #111; border: 1px solid var(--b); border-radius: 12px; }
-        #feed { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
-        .m { padding: 12px; border: 1px solid var(--b); background: #080808; max-width: 80%; border-radius: 12px; position: relative; }
-        .m.me { align-self: flex-end; border-color: var(--p); background: #001a08; }
-        .m.sys { align-self: center; border: 0; opacity: 0.4; font-size: 10px; }
-        #dock { padding: 20px; background: #000; border-top: 1px solid var(--b); display: flex; gap: 10px; }
-        input, button { background: #000; color: var(--p); border: 1px solid var(--p); padding: 12px; border-radius: 8px; outline: none; }
-        button { cursor: pointer; font-weight: bold; }
-        button:hover { background: var(--p); color: #000; transform: translateY(-1px); }
-        .active { background: #ff4444 !important; color: #fff !important; border: 0 !important; }
-        .hud { font-size: 10px; opacity: 0.5; padding: 5px 20px; display: flex; justify-content: space-between; border-top: 1px solid #111; }
+        body { background-color: #f8fafc; font-family: 'Inter', -apple-system, sans-serif; }
+        .indigo-gradient { background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); }
+        .chat-container { height: calc(100vh - 180px); }
+        #video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        video { width: 100%; border-radius: 12px; background: #000; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .help-card { border-left: 4px solid #4f46e5; background: #f5f7ff; }
         .hidden { display: none !important; }
     </style>
 </head>
-<body ondragover="event.preventDefault()" ondrop="core.drop(event)">
+<body>
 
-<div id="auth">
-    <div style="padding: 40px; border: 1px solid var(--p); background: #050505; text-align: center; width: 380px;">
-        <h1 style="color:var(--p); margin:0; letter-spacing: 2px;">TCA_GALAXY</h1>
-        <p style="opacity:0.4; margin-bottom:30px; font-size:10px;">MULTIMEDIA_MESH_V2000</p>
-        <input type="text" id="un" placeholder="NODE_ALIAS" style="width:100%; margin-bottom:20px;">
-        <button style="width:100%" onclick="core.boot()">BOOT_CORE</button>
+<div id="auth-gate" class="fixed inset-0 z-[100] bg-indigo-50 flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-indigo-100">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 indigo-gradient rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-900">Sign In</h1>
+            <p class="text-slate-500 text-sm">Create a session to begin P2P communication</p>
+        </div>
+        <div class="space-y-4">
+            <input type="text" id="un" placeholder="Username" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition">
+            <input type="password" id="pw" placeholder="Password" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition">
+            <button onclick="core.boot()" class="w-full indigo-gradient text-white py-3 rounded-xl font-bold hover:shadow-indigo-200 shadow-lg transition-all active:scale-[0.98]">Enter Chat</button>
+        </div>
     </div>
 </div>
 
-<div id="side">
-    <div style="padding:30px; text-align:center; border-bottom:1px solid var(--b);">
-        <div id="u-disp" style="color:var(--p); font-weight:900; font-size:18px;"></div>
-        <div id="u-id" style="font-size:9px; opacity:0.3; margin-top:5px; cursor:pointer;" onclick="core.copy()">ID: OFFLINE</div>
-    </div>
-    <div style="padding:20px; flex:1; overflow-y:auto;">
-        <button style="width:100%; margin-bottom:10px;" onclick="core.host()">INITIALIZE_HOST</button>
-        <button style="width:100%; background:#111; border-color:#333" onclick="core.join()">SYNC_PEER</button>
-        <div style="margin:25px 0; height:1px; background:#222;"></div>
-        <button id="cam-b" style="width:100%; margin-bottom:10px;" onclick="core.media(1)">📷 VIDEO_OFF</button>
-        <button id="mic-b" style="width:100%; margin-bottom:10px;" onclick="core.media(0)">🎤 AUDIO_OFF</button>
-        <div id="plist" style="margin-top:20px;"></div>
-    </div>
-</div>
+<div id="main-app" class="hidden flex flex-col h-screen">
+    <header class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-3">
+            <span class="text-xl font-extrabold text-indigo-600 tracking-tight">Messenger</span>
+            <span id="node-id" class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded cursor-pointer hover:bg-slate-200" onclick="core.copyID()">ID: OFFLINE</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="core.host()" class="text-xs font-bold text-slate-600 hover:text-indigo-600 px-3 py-2">Host</button>
+            <button onclick="core.join()" class="text-xs font-bold bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-100">Join Cluster</button>
+            <div class="h-6 w-[1px] bg-slate-200 mx-2"></div>
+            <button id="v-btn" onclick="core.media(1)" class="p-2 text-slate-400 hover:text-indigo-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
+            <button id="a-btn" onclick="core.media(0)" class="p-2 text-slate-400 hover:text-indigo-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg></button>
+        </div>
+    </header>
 
-<div id="stage">
-    <div id="v-grid" class="hidden">
-        <video id="loc-v" autoplay muted playsinline></video>
+    <div id="v-grid" class="hidden p-4 bg-slate-50 border-b border-slate-200">
+        <video id="loc-v" autoplay muted playsinline class="border-2 border-indigo-500"></video>
     </div>
-    <div id="feed"></div>
-    <div class="hud">
-        <span id="typing"></span>
-        <span id="stat">MESH_STABLE | 0 KB</span>
-    </div>
-    <div id="dock">
-        <input type="text" id="mi" placeholder="ENTER_COMMAND_OR_MSG..." style="flex:1" onkeypress="if(event.key==='Enter') core.send()">
-        <button onclick="core.send()">SEND</button>
-    </div>
+
+    <main class="flex-1 max-w-5xl w-full mx-auto flex flex-col">
+        <div id="feed" class="flex-1 overflow-y-auto p-6 space-y-4 chat-container">
+            <div class="text-center py-8 text-slate-400 text-xs uppercase tracking-widest font-semibold">Beginning of encrypted session</div>
+        </div>
+
+        <div class="p-4 bg-white border-t border-slate-100">
+            <div id="typing" class="text-[10px] text-indigo-400 h-4 mb-1 font-medium ml-4"></div>
+            <div class="flex gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-200">
+                <input type="text" id="mi" placeholder="Send a message or type /help..." class="flex-1 bg-transparent p-2 px-4 outline-none text-slate-700" oninput="core.ty()" onkeypress="if(event.key==='Enter') core.send()">
+                <button onclick="core.send()" class="indigo-gradient text-white px-6 py-2 rounded-xl font-bold shadow-md">Send</button>
+            </div>
+        </div>
+    </main>
 </div>
 
 <script>
-    const db = new Dexie("GalaxyDB");
+    const db = new Dexie("SecureMeshDB");
     db.version(1).stores({ logs: '++id, t, n, b, y' });
 
     const core = {
-        p: null, peers: {}, me: { n: '', id: '', str: null, bytes: 0 },
+        p: null, peers: {}, me: { n: '', id: '', str: null, tx: 0 },
         async boot() {
-            this.me.n = document.getElementById('un').value || "ANON_"+Math.random().toString(16).slice(2,5);
-            document.getElementById('u-disp').innerText = this.me.n;
-            document.getElementById('auth').classList.add('hidden');
+            this.me.n = document.getElementById('un').value || "Guest";
+            document.getElementById('auth-gate').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
             this.p = new Peer();
-            this.p.on('open', id => { this.me.id = id; document.getElementById('u-id').innerText = id; this.load(); });
+            this.p.on('open', id => { 
+                this.me.id = id; 
+                document.getElementById('node-id').innerText = "ID: " + id;
+                this.draw({y:'sys', b: 'Node connected to signaling mesh.'}); 
+                this.load(); 
+            });
             this.p.on('connection', c => {
-                c.on('open', () => { this.peers[c.peer] = c; this.sync(); });
+                c.on('open', () => { this.peers[c.peer] = c; this.draw({y:'sys', b: 'Remote peer linked.'}); });
                 c.on('data', d => this.handle(d));
             });
             this.p.on('call', call => {
@@ -90,79 +97,81 @@
                 call.on('stream', s => this.addV(call.peer, s));
             });
         },
-        async load() { (await db.logs.orderBy('id').reverse().limit(50).toArray()).reverse().forEach(m => this.draw(m, false)); },
-        async media(isVid) {
+        async load() { (await db.logs.orderBy('id').reverse().limit(30).toArray()).reverse().forEach(m => this.draw(m, false)); },
+        async media(isV) {
             if(!this.me.str) {
                 this.me.str = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('loc-v').srcObject = this.me.str;
                 document.getElementById('v-grid').classList.remove('hidden');
             }
-            const t = isVid ? this.me.str.getVideoTracks()[0] : this.me.str.getAudioTracks()[0];
+            const t = isV ? this.me.str.getVideoTracks()[0] : this.me.str.getAudioTracks()[0];
             t.enabled = !t.enabled;
-            const b = document.getElementById(isVid ? 'cam-b' : 'mic-b');
-            b.classList.toggle('active', t.enabled);
-            b.innerText = t.enabled ? `${isVid?'VIDEO':'AUDIO'}_ON` : `${isVid?'VIDEO':'AUDIO'}_OFF`;
+            document.getElementById(isV?'v-btn':'a-btn').classList.toggle('text-indigo-600', t.enabled);
             if(t.enabled) Object.keys(this.peers).forEach(id => this.p.call(id, this.me.str));
         },
         addV(id, s) {
             if(document.getElementById('v-'+id)) return;
-            const v = document.createElement('video'); v.id = 'v-'+id; v.srcObject = s; v.autoplay = true; v.playsinline = true;
+            const v = document.createElement('video'); v.id = 'v-'+id; v.srcObject = s; v.autoplay = true;
             document.getElementById('v-grid').appendChild(v);
             document.getElementById('v-grid').classList.remove('hidden');
         },
         handle(d) {
-            this.me.bytes += JSON.stringify(d).length;
-            document.getElementById('stat').innerText = `MESH_STABLE | ${(this.me.bytes/1024).toFixed(1)} KB`;
             if(['msg','sys','file'].includes(d.y)) this.draw(d, true);
-            if(d.y === 'hi') this.sync();
+            if(d.y === 'ty') {
+                const t = document.getElementById('typing'); t.innerText = d.n + " is typing...";
+                clearTimeout(this.to); this.to = setTimeout(() => t.innerText = '', 1500);
+            }
         },
         send() {
-            const i = document.getElementById('mi'); if(!i.value) return;
-            if(i.value.startsWith('/')) return this.exec(i.value);
-            const m = { y:'msg', n:this.me.n, b:i.value, t:new Date().toLocaleTimeString() };
-            Object.values(this.peers).forEach(p => p.send(m)); this.draw(m, true); i.value = '';
+            const i = document.getElementById('mi');
+            if(!i.value) return;
+            if(i.value === '/help') return this.help();
+            const m = { y:'msg', n:this.me.n, b:i.value, t:new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
+            Object.values(this.peers).forEach(p => p.send(m));
+            this.draw(m, true); i.value = '';
         },
-        exec(v) {
-            const [c, a] = v.split(' ');
-            if(c === '/void') { db.logs.clear(); location.reload(); }
-            if(c === '/theme') document.documentElement.style.setProperty('--p', a);
-            document.getElementById('mi').value = '';
-        },
-        host() { this.draw({y:'sys', b:'NODE_ELEVATED_TO_HOST'}); },
+        ty() { Object.values(this.peers).forEach(p => p.send({y:'ty', n:this.me.n})); },
+        host() { this.draw({y:'sys', b: 'Admin elevation active. Share your ID to begin.'}); },
         join() {
-            const id = prompt("PEER_NODE_ID:");
+            const id = prompt("Target Node ID:");
             if(id) {
                 const c = this.p.connect(id);
-                c.on('open', () => { this.peers[id] = c; c.send({y:'hi'}); });
+                c.on('open', () => { this.peers[id] = c; c.send({y:'sys', b: this.me.n + ' joined the cluster.'}); });
                 c.on('data', d => this.handle(d));
             }
         },
-        sync() {
-            const l = document.getElementById('plist'); l.innerHTML = '';
-            Object.keys(this.peers).forEach(id => {
-                const r = document.createElement('div'); r.style.cssText = "padding:10px; border:1px solid #111; margin-bottom:5px; border-radius:8px; display:flex; justify-content:space-between;";
-                r.innerHTML = `<span style="font-size:10px;">PEER_${id.slice(0,5)}</span><button onclick="core.call('${id}')" style="padding:2px 8px; font-size:9px;">CALL</button>`;
-                l.appendChild(r);
-            });
-        },
-        call(id) { if(this.me.str) this.p.call(id, this.me.str); else alert("ENABLE_HARDWARE_FIRST"); },
         draw(d, s) {
             if(s) db.logs.add(d);
             const f = document.getElementById('feed');
-            const r = document.createElement('div');
-            r.className = `m ${d.n === this.me.n ? 'me' : ''} ${d.y}`;
-            r.innerHTML = `<div style="font-size:8px; opacity:0.3; margin-bottom:4px;">${d.n || 'EXE'}</div>${d.b}`;
-            f.appendChild(r); f.scrollTop = f.scrollHeight;
+            const w = document.createElement('div');
+            w.className = d.y === 'sys' ? "flex justify-center" : (d.n === this.me.n ? "flex justify-end" : "flex justify-start");
+            
+            const m = document.createElement('div');
+            if(d.y === 'sys') m.className = "text-[10px] bg-slate-100 text-slate-500 px-3 py-1 rounded-full";
+            else m.className = `max-w-md px-4 py-2 rounded-2xl shadow-sm ${d.n === this.me.n ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none'}`;
+            
+            m.innerHTML = d.y === 'msg' ? `<div class="text-[9px] opacity-60 mb-1">${d.n} • ${d.t}</div>${d.b}` : d.b;
+            w.appendChild(m); f.appendChild(w); f.scrollTop = f.scrollHeight;
         },
-        drop(e) {
-            e.preventDefault(); const f = e.dataTransfer.files[0]; const r = new FileReader();
-            r.onload = () => {
-                const m = { y:'file', b: `UPLOAD: <a href="${r.result}" download="${f.name}" style="color:var(--p)">${f.name}</a>`, n:this.me.n };
-                Object.values(this.peers).forEach(p => p.send(m)); this.draw(m, true);
-            };
-            r.readAsDataURL(f);
+        help() {
+            const f = document.getElementById('feed');
+            const h = document.createElement('div');
+            h.className = "help-card p-6 rounded-2xl shadow-lg my-4 max-w-2xl mx-auto border border-indigo-50";
+            h.innerHTML = `
+                <h3 class="text-indigo-700 font-bold text-lg mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0118 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                    Communication Cluster Features
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div><p class="font-bold text-slate-700">P2P Video & Voice</p><p class="text-slate-500">Real-time media broadcasting via WebRTC Data Channels.</p></div>
+                    <div><p class="font-bold text-slate-700">IndexedDB Vault</p><p class="text-slate-500">Message history is encrypted and stored locally in your browser.</p></div>
+                    <div><p class="font-bold text-slate-700">Zero-Server Transfer</p><p class="text-slate-500">Files and data move directly between peers, never touching a server.</p></div>
+                    <div><p class="font-bold text-slate-700">Admin Controls</p><p class="text-slate-500">Host meetings, manage peer links, and monitor network health.</p></div>
+                </div>
+            `;
+            f.appendChild(h); f.scrollTop = f.scrollHeight; document.getElementById('mi').value = '';
         },
-        copy() { navigator.clipboard.writeText(this.me.id); alert("ID_CACHED"); }
+        copyID() { navigator.clipboard.writeText(this.me.id); alert("Node ID copied to clipboard."); }
     };
 </script>
 </body>
