@@ -3,170 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TCA That's Chat Alright</title>
+    <title>TCA</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.min.js"></script>
     <style>
-        :root { --p: #00ff88; --bg: #000; --s: #080808; --t: #fff; --b: #151515; --f: 'Courier New', monospace; }
-        * { box-sizing: border-box; font-family: var(--f); }
-        body { margin: 0; background: var(--bg); color: var(--t); display: flex; height: 100vh; overflow: hidden; font-size: 12px; }
-        #overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; border: 4px solid var(--p); margin: 10px; }
-        .terminal { width: 450px; padding: 30px; }
-        #sidebar { width: 300px; background: var(--s); border-right: 1px solid var(--b); display: flex; flex-direction: column; }
-        #viewport { flex: 1; display: flex; flex-direction: column; background: radial-gradient(circle at top, #0a0a0a 0%, #000 100%); }
-        #stream { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 5px; }
-        .node-msg { padding: 8px 12px; border: 1px solid var(--b); background: #030303; position: relative; max-width: 85%; }
-        .node-msg.me { align-self: flex-end; border-color: var(--p); background: #001a08; }
-        .node-msg.ann { width: 100%; border: 1px solid #ff0055; color: #ff0055; text-align: center; font-weight: bold; }
-        .node-msg.sys { align-self: center; border: none; opacity: 0.4; font-size: 10px; }
-        #input-row { padding: 15px; background: #000; border-top: 1px solid var(--b); display: flex; gap: 10px; }
-        input, button { background: #000; color: var(--p); border: 1px solid var(--p); padding: 10px; outline: none; }
+        :root { --p: #00ff88; --bg: #000; --s: #0a0a0a; --t: #fff; --b: #222; --f: 'Inter', sans-serif; }
+        * { box-sizing: border-box; font-family: var(--f); font-size: 13px; color: var(--t); transition: 0.2s ease; }
+        body { margin: 0; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
+        #auth { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; border: 4px solid var(--p); }
+        #side { width: 320px; background: var(--s); border-right: 1px solid var(--b); display: flex; flex-direction: column; z-index: 20; }
+        #stage { flex: 1; display: flex; flex-direction: column; position: relative; background: radial-gradient(circle, #050505 0%, #000 100%); }
+        #v-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; padding: 15px; min-height: 0; flex: 0; background: #000; }
+        video { width: 100%; height: 100%; object-fit: cover; background: #111; border: 1px solid var(--b); border-radius: 12px; }
+        #feed { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+        .m { padding: 12px; border: 1px solid var(--b); background: #080808; max-width: 80%; border-radius: 12px; position: relative; }
+        .m.me { align-self: flex-end; border-color: var(--p); background: #001a08; }
+        .m.sys { align-self: center; border: 0; opacity: 0.4; font-size: 10px; }
+        #dock { padding: 20px; background: #000; border-top: 1px solid var(--b); display: flex; gap: 10px; }
+        input, button { background: #000; color: var(--p); border: 1px solid var(--p); padding: 12px; border-radius: 8px; outline: none; }
         button { cursor: pointer; font-weight: bold; }
-        button:hover { background: var(--p); color: #000; }
-        .peer-tag { padding: 5px; font-size: 10px; border: 1px solid #222; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
-        #pulse { font-size: 9px; color: var(--p); padding-left: 20px; height: 12px; opacity: 0.5; }
+        button:hover { background: var(--p); color: #000; transform: translateY(-1px); }
+        .active { background: #ff4444 !important; color: #fff !important; border: 0 !important; }
+        .hud { font-size: 10px; opacity: 0.5; padding: 5px 20px; display: flex; justify-content: space-between; border-top: 1px solid #111; }
         .hidden { display: none !important; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: var(--p); }
     </style>
 </head>
 <body ondragover="event.preventDefault()" ondrop="core.drop(event)">
 
-<div id="overlay">
-    <div class="terminal">
-        <h1 style="color:var(--p); font-size:1.5rem;">[TCA_SINGULARITY]</h1>
-        <p>RE-IDENTIFY NODE_</p>
-        <input type="text" id="u-name" placeholder="NODE_ALIAS" style="width:100%; margin-bottom:10px;">
-        <input type="password" id="u-vault" placeholder="VAULT_KEY" style="width:100%; margin-bottom:20px;">
-        <button style="width:100%" onclick="core.boot()">ACTIVATE_CORE</button>
+<div id="auth">
+    <div style="padding: 40px; border: 1px solid var(--p); background: #050505; text-align: center; width: 380px;">
+        <h1 style="color:var(--p); margin:0; letter-spacing: 2px;">TCA_GALAXY</h1>
+        <p style="opacity:0.4; margin-bottom:30px; font-size:10px;">MULTIMEDIA_MESH_V2000</p>
+        <input type="text" id="un" placeholder="NODE_ALIAS" style="width:100%; margin-bottom:20px;">
+        <button style="width:100%" onclick="core.boot()">BOOT_CORE</button>
     </div>
 </div>
 
-<div id="sidebar">
-    <div style="padding:20px; border-bottom:1px solid var(--b); text-align:center;">
-        <img src="https://api.dicebear.com/7.x/identicon/svg?seed=singularity" id="u-av" style="width:70px; height:70px; border:1px solid var(--p); cursor:pointer;" onclick="document.getElementById('file-up').click()">
-        <input type="file" id="file-up" class="hidden" onchange="core.upAv(event)">
-        <div id="u-display" style="margin-top:10px; color:var(--p); font-weight:bold;"></div>
-        <div id="u-id" style="font-size:8px; opacity:0.3; cursor:pointer;" onclick="core.copy()">ID: LINKING...</div>
+<div id="side">
+    <div style="padding:30px; text-align:center; border-bottom:1px solid var(--b);">
+        <div id="u-disp" style="color:var(--p); font-weight:900; font-size:18px;"></div>
+        <div id="u-id" style="font-size:9px; opacity:0.3; margin-top:5px; cursor:pointer;" onclick="core.copy()">ID: OFFLINE</div>
     </div>
-    <div style="padding:15px; flex:1; overflow-y:auto;">
-        <button style="width:100%; margin-bottom:10px;" onclick="core.host()">GENERATE_CLUSTER</button>
-        <button style="width:100%; background:#111; color:#fff; border-color:#333" onclick="core.join()">ATTACH_TO_NODE</button>
-        <div style="margin-top:20px;">
-            <p style="font-size:9px; color:#555;">TOPOLOGY_STATS [<span id="p-count">0</span>]</p>
-            <div id="p-mesh"></div>
-        </div>
+    <div style="padding:20px; flex:1; overflow-y:auto;">
+        <button style="width:100%; margin-bottom:10px;" onclick="core.host()">INITIALIZE_HOST</button>
+        <button style="width:100%; background:#111; border-color:#333" onclick="core.join()">SYNC_PEER</button>
+        <div style="margin:25px 0; height:1px; background:#222;"></div>
+        <button id="cam-b" style="width:100%; margin-bottom:10px;" onclick="core.media(1)">📷 VIDEO_OFF</button>
+        <button id="mic-b" style="width:100%; margin-bottom:10px;" onclick="core.media(0)">🎤 AUDIO_OFF</button>
+        <div id="plist" style="margin-top:20px;"></div>
     </div>
 </div>
 
-<div id="viewport">
-    <div id="stream"></div>
-    <div id="pulse"></div>
-    <div id="input-row">
-        <button onclick="core.ann()" id="ann-btn" class="hidden" style="border-color:#ff0055; color:#ff0055">!</button>
-        <input type="text" id="m-in" placeholder="MSG OR /CMD..." style="flex:1" oninput="core.ty()" onkeypress="if(event.key==='Enter') core.send()">
-        <button onclick="core.send()">SEND_</button>
+<div id="stage">
+    <div id="v-grid" class="hidden">
+        <video id="loc-v" autoplay muted playsinline></video>
+    </div>
+    <div id="feed"></div>
+    <div class="hud">
+        <span id="typing"></span>
+        <span id="stat">MESH_STABLE | 0 KB</span>
+    </div>
+    <div id="dock">
+        <input type="text" id="mi" placeholder="ENTER_COMMAND_OR_MSG..." style="flex:1" onkeypress="if(event.key==='Enter') core.send()">
+        <button onclick="core.send()">SEND</button>
     </div>
 </div>
 
 <script>
-    const db = new Dexie("SingularityDB");
-    db.version(1).stores({ history: '++id, t, n, b, y, a' });
+    const db = new Dexie("GalaxyDB");
+    db.version(1).stores({ logs: '++id, t, n, b, y' });
 
     const core = {
-        p: null, c: null, nodes: {}, me: { n: '', a: '', r: 'node', id: '' },
+        p: null, peers: {}, me: { n: '', id: '', str: null, bytes: 0 },
         async boot() {
-            this.me.n = document.getElementById('u-name').value || "ANON_"+Math.random().toString(36).slice(2,5);
-            document.getElementById('u-display').innerText = this.me.n;
-            document.getElementById('overlay').classList.add('hidden');
+            this.me.n = document.getElementById('un').value || "ANON_"+Math.random().toString(16).slice(2,5);
+            document.getElementById('u-disp').innerText = this.me.n;
+            document.getElementById('auth').classList.add('hidden');
             this.p = new Peer();
-            this.p.on('open', id => { this.me.id = id; this.draw({y:'sys', b:'NODE_INIT: ' + id}); this.load(); });
-            this.p.on('connection', x => {
-                x.on('open', () => { this.nodes[x.peer] = x; this.sync(); });
-                x.on('data', d => this.process(d, x));
-                x.on('close', () => { delete this.nodes[x.peer]; this.sync(); });
+            this.p.on('open', id => { this.me.id = id; document.getElementById('u-id').innerText = id; this.load(); });
+            this.p.on('connection', c => {
+                c.on('open', () => { this.peers[c.peer] = c; this.sync(); });
+                c.on('data', d => this.handle(d));
+            });
+            this.p.on('call', call => {
+                call.answer(this.me.str);
+                call.on('stream', s => this.addV(call.peer, s));
             });
         },
-        async load() {
-            const h = await db.history.orderBy('id').reverse().limit(150).toArray();
-            h.reverse().forEach(m => this.draw(m, false));
-        },
-        upAv(e) {
-            const r = new FileReader();
-            r.onload = () => { this.me.a = r.result; document.getElementById('u-av').src = r.result; };
-            r.readAsDataURL(e.target.files[0]);
-        },
-        host() { this.me.r = 'host'; document.getElementById('ann-btn').classList.remove('hidden'); this.draw({y:'sys', b:'CLUSTER_AUTHORITY_ACK'}); },
-        join() {
-            const id = prompt("PEER_NODE_ID:");
-            if(!id) return;
-            this.c = this.p.connect(id);
-            this.c.on('open', () => {
-                this.c.send({y:'hi', n:this.me.n, a:this.me.a});
-                this.draw({y:'sys', b:'ATTACHMENT_COMPLETE'});
-            });
-            this.c.on('data', d => this.process(d));
-        },
-        process(d, x) {
-            if(['msg','ann','sys','file'].includes(d.y)) this.draw(d, true);
-            if(d.y === 'hi') { this.draw({y:'sys', b: d.n + ' DETECTED'}); if(this.me.r === 'host') this.sync(); }
-            if(d.y === 'kick') { alert('HOST_TERMINATED_CONNECTION'); location.reload(); }
-            if(d.y === 'ty') {
-                const t = document.getElementById('pulse'); t.innerText = d.n + ' is processing data...';
-                clearTimeout(this.to); this.to = setTimeout(() => t.innerText = '', 1000);
+        async load() { (await db.logs.orderBy('id').reverse().limit(50).toArray()).reverse().forEach(m => this.draw(m, false)); },
+        async media(isVid) {
+            if(!this.me.str) {
+                this.me.str = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('loc-v').srcObject = this.me.str;
+                document.getElementById('v-grid').classList.remove('hidden');
             }
+            const t = isVid ? this.me.str.getVideoTracks()[0] : this.me.str.getAudioTracks()[0];
+            t.enabled = !t.enabled;
+            const b = document.getElementById(isVid ? 'cam-b' : 'mic-b');
+            b.classList.toggle('active', t.enabled);
+            b.innerText = t.enabled ? `${isVid?'VIDEO':'AUDIO'}_ON` : `${isVid?'VIDEO':'AUDIO'}_OFF`;
+            if(t.enabled) Object.keys(this.peers).forEach(id => this.p.call(id, this.me.str));
+        },
+        addV(id, s) {
+            if(document.getElementById('v-'+id)) return;
+            const v = document.createElement('video'); v.id = 'v-'+id; v.srcObject = s; v.autoplay = true; v.playsinline = true;
+            document.getElementById('v-grid').appendChild(v);
+            document.getElementById('v-grid').classList.remove('hidden');
+        },
+        handle(d) {
+            this.me.bytes += JSON.stringify(d).length;
+            document.getElementById('stat').innerText = `MESH_STABLE | ${(this.me.bytes/1024).toFixed(1)} KB`;
+            if(['msg','sys','file'].includes(d.y)) this.draw(d, true);
+            if(d.y === 'hi') this.sync();
         },
         send() {
-            const i = document.getElementById('m-in');
-            if(!i.value) return;
+            const i = document.getElementById('mi'); if(!i.value) return;
             if(i.value.startsWith('/')) return this.exec(i.value);
-            const m = { y:'msg', n:this.me.n, b:i.value, a:this.me.a, t:new Date().toLocaleTimeString() };
-            this.broadcast(m); this.draw(m, true); i.value = '';
+            const m = { y:'msg', n:this.me.n, b:i.value, t:new Date().toLocaleTimeString() };
+            Object.values(this.peers).forEach(p => p.send(m)); this.draw(m, true); i.value = '';
         },
         exec(v) {
             const [c, a] = v.split(' ');
-            if(c === '/void') { db.history.clear(); location.reload(); }
+            if(c === '/void') { db.logs.clear(); location.reload(); }
             if(c === '/theme') document.documentElement.style.setProperty('--p', a);
-            if(c === '/nuke' && this.me.r === 'host') { Object.keys(this.nodes).forEach(id => this.kick(id)); }
-            document.getElementById('m-in').value = '';
+            document.getElementById('mi').value = '';
         },
-        broadcast(m) { if(this.c) this.c.send(m); Object.values(this.nodes).forEach(p => p.send(m)); },
-        ty() { this.broadcast({y:'ty', n:this.me.n}); },
-        ann() {
-            const t = prompt("CLUSTER_WIDELINE:");
-            if(t) { const m = {y:'ann', b:t, n:'AUTHORITY'}; this.broadcast(m); this.draw(m, true); }
+        host() { this.draw({y:'sys', b:'NODE_ELEVATED_TO_HOST'}); },
+        join() {
+            const id = prompt("PEER_NODE_ID:");
+            if(id) {
+                const c = this.p.connect(id);
+                c.on('open', () => { this.peers[id] = c; c.send({y:'hi'}); });
+                c.on('data', d => this.handle(d));
+            }
         },
         sync() {
-            const l = document.getElementById('p-mesh'); l.innerHTML = '';
-            const ids = Object.keys(this.nodes);
-            document.getElementById('p-count').innerText = ids.length;
-            ids.forEach(id => {
-                const r = document.createElement('div'); r.className = 'peer-tag';
-                r.innerHTML = `<span>NODE_${id.slice(0,6)}</span>${this.me.r==='host'?`<button onclick="core.kick('${id}')" style="padding:0 5px; font-size:8px">HALT</button>`:''}`;
+            const l = document.getElementById('plist'); l.innerHTML = '';
+            Object.keys(this.peers).forEach(id => {
+                const r = document.createElement('div'); r.style.cssText = "padding:10px; border:1px solid #111; margin-bottom:5px; border-radius:8px; display:flex; justify-content:space-between;";
+                r.innerHTML = `<span style="font-size:10px;">PEER_${id.slice(0,5)}</span><button onclick="core.call('${id}')" style="padding:2px 8px; font-size:9px;">CALL</button>`;
                 l.appendChild(r);
             });
         },
-        kick(id) { if(this.nodes[id]) { this.nodes[id].send({y:'kick'}); this.nodes[id].close(); } },
+        call(id) { if(this.me.str) this.p.call(id, this.me.str); else alert("ENABLE_HARDWARE_FIRST"); },
         draw(d, s) {
-            if(s) db.history.add(d);
-            const f = document.getElementById('stream');
+            if(s) db.logs.add(d);
+            const f = document.getElementById('feed');
             const r = document.createElement('div');
-            r.className = `node-msg ${d.n === this.me.n ? 'me' : ''} ${d.y}`;
-            const av = d.a ? `<img src="${d.a}" style="width:14px;height:14px;margin-right:5px;vertical-align:middle;border:1px solid var(--p)">` : '';
-            r.innerHTML = `<div style="font-size:8px; opacity:0.3; margin-bottom:3px">${av}${d.n || 'SINGULARITY'} : ${d.t || ''}</div><div>${d.b}</div>`;
+            r.className = `m ${d.n === this.me.n ? 'me' : ''} ${d.y}`;
+            r.innerHTML = `<div style="font-size:8px; opacity:0.3; margin-bottom:4px;">${d.n || 'EXE'}</div>${d.b}`;
             f.appendChild(r); f.scrollTop = f.scrollHeight;
         },
         drop(e) {
-            e.preventDefault();
-            const f = e.dataTransfer.files[0];
-            const r = new FileReader();
+            e.preventDefault(); const f = e.dataTransfer.files[0]; const r = new FileReader();
             r.onload = () => {
-                const m = { y:'file', b: `[UPLOAD] <a href="${r.result}" download="${f.name}" style="color:var(--p)">${f.name}</a>`, n:this.me.n, a:this.me.a, t:new Date().toLocaleTimeString() };
-                this.broadcast(m); this.draw(m, true);
+                const m = { y:'file', b: `UPLOAD: <a href="${r.result}" download="${f.name}" style="color:var(--p)">${f.name}</a>`, n:this.me.n };
+                Object.values(this.peers).forEach(p => p.send(m)); this.draw(m, true);
             };
             r.readAsDataURL(f);
         },
-        copy() { navigator.clipboard.writeText(this.me.id); alert("NODE_ID_COPIED"); }
+        copy() { navigator.clipboard.writeText(this.me.id); alert("ID_CACHED"); }
     };
 </script>
 </body>
