@@ -9,16 +9,20 @@
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #f8fafc; font-family: 'Inter', -apple-system, sans-serif; }
+        body { background-color: #f0f2f5; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
         .indigo-gradient { background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); }
-        .chat-container { height: calc(100vh - 180px); }
-        #video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-        video { width: 100%; border-radius: 12px; background: #000; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        .help-card { border-left: 4px solid #4f46e5; background: #f5f7ff; }
+        .sidebar { width: 350px; background: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; }
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: #efeae2; }
+        .chat-container { flex: 1; overflow-y: auto; padding: 20px; }
+        video { width: 100%; border-radius: 8px; background: #000; transform: scaleX(-1); }
+        .peer-item { cursor: pointer; transition: all 0.2s; border-bottom: 1px solid #f1f5f9; }
+        .peer-item:hover { background-color: #f8fafc; }
+        .active-peer { background-color: #f1f5f9 !important; border-left: 4px solid #4f46e5; }
+        .help-card { border-left: 4px solid #4f46e5; background: white; padding: 15px; border-radius: 8px; margin: 10px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .hidden { display: none !important; }
     </style>
 </head>
-<body>
+<body class="flex">
 
 <div id="auth-gate" class="fixed inset-0 z-[100] bg-indigo-50 flex items-center justify-center p-4">
     <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-indigo-100">
@@ -27,45 +31,57 @@
                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
             </div>
             <h1 class="text-2xl font-bold text-slate-900">Sign In</h1>
-            <p class="text-slate-500 text-sm">Create a session to begin P2P communication</p>
         </div>
         <div class="space-y-4">
-            <input type="text" id="un" placeholder="Username" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition">
-            <input type="password" id="pw" placeholder="Password" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition">
-            <button onclick="core.boot()" class="w-full indigo-gradient text-white py-3 rounded-xl font-bold hover:shadow-indigo-200 shadow-lg transition-all active:scale-[0.98]">Enter Chat</button>
+            <input type="text" id="un" placeholder="Display Name" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+            <button onclick="core.boot()" class="w-full indigo-gradient text-white py-3 rounded-xl font-bold">Enter Chat</button>
         </div>
     </div>
 </div>
 
-<div id="main-app" class="hidden flex flex-col h-screen">
-    <header class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm">
-        <div class="flex items-center gap-3">
-            <span class="text-xl font-extrabold text-indigo-600 tracking-tight">Messenger</span>
-            <span id="node-id" class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded cursor-pointer hover:bg-slate-200" onclick="core.copyID()">ID: OFFLINE</span>
+<div id="main-app" class="hidden flex w-full h-full">
+    <aside class="sidebar">
+        <div class="p-4 bg-slate-50 border-b flex flex-col gap-2">
+            <div class="flex justify-between items-center">
+                <span class="font-bold text-indigo-600 text-lg">Messenger</span>
+                <button onclick="core.join()" class="p-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 4v16m8-8H4"></path></svg></button>
+            </div>
+            <button onclick="core.joinCall()" class="w-full text-left text-xs font-bold text-slate-500 hover:text-indigo-600 uppercase tracking-tighter">Join Audio/Video Call</button>
         </div>
-        <div class="flex items-center gap-3">
-            <button onclick="core.host()" class="text-xs font-bold text-slate-600 hover:text-indigo-600 px-3 py-2">Host</button>
-            <button onclick="core.join()" class="text-xs font-bold bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-100">Join Cluster</button>
-            <div class="h-6 w-[1px] bg-slate-200 mx-2"></div>
-            <button id="v-btn" onclick="core.media(1)" class="p-2 text-slate-400 hover:text-indigo-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
-            <button id="a-btn" onclick="core.media(0)" class="p-2 text-slate-400 hover:text-indigo-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg></button>
+        
+        <div id="peer-list" class="flex-1 overflow-y-auto"></div>
+
+        <div class="p-4 border-t bg-slate-50 flex flex-col gap-2">
+            <div id="node-id" class="text-[10px] text-slate-400 break-all cursor-pointer font-mono" onclick="core.copyID()">ID: ...</div>
+            <button onclick="core.deleteAll()" class="w-full py-2 text-xs font-bold text-red-500 hover:bg-red-50 rounded border border-red-100">Delete All Conversations</button>
         </div>
-    </header>
+    </aside>
 
-    <div id="v-grid" class="hidden p-4 bg-slate-50 border-b border-slate-200">
-        <video id="loc-v" autoplay muted playsinline class="border-2 border-indigo-500"></video>
-    </div>
+    <main class="chat-area">
+        <header class="bg-white border-b px-6 py-3 flex justify-between items-center shadow-sm z-10">
+            <div class="flex flex-col">
+                <span id="chat-title" class="font-bold text-slate-800">Select a contact</span>
+                <span id="chat-status" class="text-[10px] text-slate-400">P2P Encryption Active</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="v-btn" onclick="core.media(1)" class="p-2 text-slate-400 hover:text-indigo-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
+                <button id="a-btn" onclick="core.media(0)" class="p-2 text-slate-400 hover:text-indigo-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg></button>
+            </div>
+        </header>
 
-    <main class="flex-1 max-w-5xl w-full mx-auto flex flex-col">
-        <div id="feed" class="flex-1 overflow-y-auto p-6 space-y-4 chat-container">
-            <div class="text-center py-8 text-slate-400 text-xs uppercase tracking-widest font-semibold">Beginning of encrypted session</div>
+        <div id="v-grid" class="hidden p-4 bg-black flex flex-wrap gap-2 justify-center">
+            <video id="loc-v" autoplay muted playsinline class="max-w-[200px] border-2 border-indigo-500"></video>
         </div>
 
-        <div class="p-4 bg-white border-t border-slate-100">
-            <div id="typing" class="text-[10px] text-indigo-400 h-4 mb-1 font-medium ml-4"></div>
-            <div class="flex gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-200">
-                <input type="text" id="mi" placeholder="Send a message or type /help..." class="flex-1 bg-transparent p-2 px-4 outline-none text-slate-700" oninput="core.ty()" onkeypress="if(event.key==='Enter') core.send()">
-                <button onclick="core.send()" class="indigo-gradient text-white px-6 py-2 rounded-xl font-bold shadow-md">Send</button>
+        <div id="feed" class="chat-container">
+            <div class="text-center py-20 text-slate-400 text-sm">Select a chat to begin messaging</div>
+        </div>
+
+        <div class="p-4 bg-[#f0f2f5] border-t">
+            <div id="typing" class="text-[10px] text-indigo-500 h-4 mb-1 font-medium ml-4"></div>
+            <div class="flex gap-3">
+                <input type="text" id="mi" placeholder="Type a message or /help..." class="flex-1 bg-white p-3 px-6 rounded-full outline-none text-slate-700 shadow-sm" oninput="core.ty()" onkeypress="if(event.key==='Enter') core.send()">
+                <button onclick="core.send()" class="indigo-gradient text-white w-12 h-12 rounded-full flex items-center justify-center shadow-md"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg></button>
             </div>
         </div>
     </main>
@@ -73,10 +89,10 @@
 
 <script>
     const db = new Dexie("SecureMeshDB");
-    db.version(1).stores({ logs: '++id, t, n, b, y' });
+    db.version(2).stores({ logs: '++id, t, n, b, y, pid', chats: 'pid, n' });
 
     const core = {
-        p: null, peers: {}, me: { n: '', id: '', str: null, tx: 0 },
+        p: null, peers: {}, currentPid: null, me: { n: '', id: '', str: null },
         async boot() {
             this.me.n = document.getElementById('un').value || "Guest";
             document.getElementById('auth-gate').classList.add('hidden');
@@ -84,94 +100,151 @@
             this.p = new Peer();
             this.p.on('open', id => { 
                 this.me.id = id; 
-                document.getElementById('node-id').innerText = "ID: " + id;
-                this.draw({y:'sys', b: 'Node connected to signaling mesh.'}); 
-                this.load(); 
+                document.getElementById('node-id').innerText = id;
+                this.refreshPeers();
             });
-            this.p.on('connection', c => {
-                c.on('open', () => { this.peers[c.peer] = c; this.draw({y:'sys', b: 'Remote peer linked.'}); });
-                c.on('data', d => this.handle(d));
-            });
+            this.p.on('connection', c => this.initConn(c));
             this.p.on('call', call => {
                 call.answer(this.me.str);
                 call.on('stream', s => this.addV(call.peer, s));
             });
         },
-        async load() { (await db.logs.orderBy('id').reverse().limit(30).toArray()).reverse().forEach(m => this.draw(m, false)); },
+        initConn(c) {
+            c.on('open', async () => {
+                this.peers[c.peer] = c;
+                await db.chats.put({ pid: c.peer, n: 'Remote Peer' });
+                this.refreshPeers();
+                this.selectChat(c.peer);
+            });
+            c.on('data', d => this.handle(d, c.peer));
+            c.on('close', () => { delete this.peers[c.peer]; this.refreshPeers(); });
+        },
+        async refreshPeers() {
+            const list = document.getElementById('peer-list');
+            const chats = await db.chats.toArray();
+            list.innerHTML = chats.map(c => `
+                <div class="peer-item p-4 flex items-center justify-between ${this.currentPid === c.pid ? 'active-peer' : ''}" onclick="core.selectChat('${c.pid}')">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">${c.n[0].toUpperCase()}</div>
+                        <div class="flex flex-col">
+                            <span class="font-bold text-sm text-slate-700">${c.n}</span>
+                            <span class="text-[10px] text-slate-400 font-mono">${c.pid.substring(0,8)}...</span>
+                        </div>
+                    </div>
+                    <button onclick="event.stopPropagation(); core.deleteChat('${c.pid}')" class="text-slate-300 hover:text-red-500 p-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            `).join('') || '<div class="p-8 text-center text-xs text-slate-400">No active chats</div>';
+        },
+        async selectChat(pid) {
+            this.currentPid = pid;
+            const chat = await db.chats.get(pid);
+            document.getElementById('chat-title').innerText = chat ? chat.n : pid;
+            this.refreshPeers();
+            this.loadMessages();
+        },
+        async loadMessages() {
+            const f = document.getElementById('feed');
+            f.innerHTML = '';
+            const msgs = await db.logs.where('pid').equals(this.currentPid).toArray();
+            msgs.forEach(m => this.draw(m, false));
+            f.scrollTop = f.scrollHeight;
+        },
+        handle(d, pid) {
+            if (d.y === 'ty') {
+                if (this.currentPid === pid) {
+                    const t = document.getElementById('typing'); t.innerText = "typing...";
+                    clearTimeout(this.to); this.to = setTimeout(() => t.innerText = '', 1500);
+                }
+            } else {
+                this.draw(d, true, pid);
+            }
+        },
         async media(isV) {
-            if(!this.me.str) {
+            if (!this.me.str) {
                 this.me.str = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('loc-v').srcObject = this.me.str;
                 document.getElementById('v-grid').classList.remove('hidden');
             }
             const t = isV ? this.me.str.getVideoTracks()[0] : this.me.str.getAudioTracks()[0];
             t.enabled = !t.enabled;
-            document.getElementById(isV?'v-btn':'a-btn').classList.toggle('text-indigo-600', t.enabled);
-            if(t.enabled) Object.keys(this.peers).forEach(id => this.p.call(id, this.me.str));
+            this.copyID();
+            alert("Call Initiated. Node ID copied. Others can join using 'Join Call'.");
+            if (this.currentPid && this.peers[this.currentPid]) this.p.call(this.currentPid, this.me.str);
         },
         addV(id, s) {
-            if(document.getElementById('v-'+id)) return;
-            const v = document.createElement('video'); v.id = 'v-'+id; v.srcObject = s; v.autoplay = true;
+            if (document.getElementById('v-'+id)) return;
+            const v = document.createElement('video'); v.id = 'v-'+id; v.srcObject = s; v.autoplay = true; v.className = "max-w-[200px]";
             document.getElementById('v-grid').appendChild(v);
             document.getElementById('v-grid').classList.remove('hidden');
         },
-        handle(d) {
-            if(['msg','sys','file'].includes(d.y)) this.draw(d, true);
-            if(d.y === 'ty') {
-                const t = document.getElementById('typing'); t.innerText = d.n + " is typing...";
-                clearTimeout(this.to); this.to = setTimeout(() => t.innerText = '', 1500);
-            }
-        },
         send() {
             const i = document.getElementById('mi');
-            if(!i.value) return;
-            if(i.value === '/help') return this.help();
-            const m = { y:'msg', n:this.me.n, b:i.value, t:new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
-            Object.values(this.peers).forEach(p => p.send(m));
-            this.draw(m, true); i.value = '';
+            if (!i.value) return;
+            if (i.value === '/help') return this.help();
+            if (!this.currentPid) return alert("Select a chat first");
+            const m = { pid: this.currentPid, y:'msg', n:this.me.n, b:i.value, t:new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
+            if (this.peers[this.currentPid]) this.peers[this.currentPid].send(m);
+            this.draw(m, true);
+            i.value = '';
         },
-        ty() { Object.values(this.peers).forEach(p => p.send({y:'ty', n:this.me.n})); },
-        host() { this.draw({y:'sys', b: 'Admin elevation active. Share your ID to begin.'}); },
+        ty() { if (this.currentPid && this.peers[this.currentPid]) this.peers[this.currentPid].send({y:'ty'}); },
         join() {
-            const id = prompt("Target Node ID:");
-            if(id) {
-                const c = this.p.connect(id);
-                c.on('open', () => { this.peers[id] = c; c.send({y:'sys', b: this.me.n + ' joined the cluster.'}); });
-                c.on('data', d => this.handle(d));
+            const id = prompt("Enter Peer ID:");
+            if (id && id !== this.me.id) this.initConn(this.p.connect(id));
+        },
+        joinCall() {
+            const id = prompt("Enter Caller's Node ID:");
+            if (id) {
+                if (!this.me.str) alert("Enable camera/audio first.");
+                else this.p.call(id, this.me.str);
             }
         },
-        draw(d, s) {
-            if(s) db.logs.add(d);
+        draw(d, s, pid) {
+            const targetPid = pid || d.pid;
+            if (s) db.logs.add({ ...d, pid: targetPid });
+            if (this.currentPid !== targetPid) return;
             const f = document.getElementById('feed');
             const w = document.createElement('div');
-            w.className = d.y === 'sys' ? "flex justify-center" : (d.n === this.me.n ? "flex justify-end" : "flex justify-start");
-            
+            w.className = d.n === this.me.n ? "flex justify-end mb-4" : "flex justify-start mb-4";
             const m = document.createElement('div');
-            if(d.y === 'sys') m.className = "text-[10px] bg-slate-100 text-slate-500 px-3 py-1 rounded-full";
-            else m.className = `max-w-md px-4 py-2 rounded-2xl shadow-sm ${d.n === this.me.n ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none'}`;
-            
-            m.innerHTML = d.y === 'msg' ? `<div class="text-[9px] opacity-60 mb-1">${d.n} • ${d.t}</div>${d.b}` : d.b;
+            m.className = `max-w-[70%] px-4 py-2 rounded-2xl text-sm shadow-sm ${d.n === this.me.n ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-700 rounded-tl-none'}`;
+            m.innerHTML = `<div class="text-[10px] opacity-60 mb-1 font-bold">${d.n} • ${d.t}</div>${d.b}`;
             w.appendChild(m); f.appendChild(w); f.scrollTop = f.scrollHeight;
+        },
+        async deleteChat(pid) {
+            if (confirm("Delete this conversation?")) {
+                await db.chats.delete(pid);
+                await db.logs.where('pid').equals(pid).delete();
+                if (this.currentPid === pid) this.currentPid = null;
+                this.refreshPeers();
+                location.reload();
+            }
+        },
+        async deleteAll() {
+            if (confirm("Wipe all chats and messages?")) {
+                await db.chats.clear();
+                await db.logs.clear();
+                location.reload();
+            }
         },
         help() {
             const f = document.getElementById('feed');
             const h = document.createElement('div');
-            h.className = "help-card p-6 rounded-2xl shadow-lg my-4 max-w-2xl mx-auto border border-indigo-50";
+            h.className = "help-card";
             h.innerHTML = `
-                <h3 class="text-indigo-700 font-bold text-lg mb-4 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0118 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-                    Communication Cluster Features
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div><p class="font-bold text-slate-700">P2P Video & Voice</p><p class="text-slate-500">Real-time media broadcasting via WebRTC Data Channels.</p></div>
-                    <div><p class="font-bold text-slate-700">IndexedDB Vault</p><p class="text-slate-500">Message history is encrypted and stored locally in your browser.</p></div>
-                    <div><p class="font-bold text-slate-700">Zero-Server Transfer</p><p class="text-slate-500">Files and data move directly between peers, never touching a server.</p></div>
-                    <div><p class="font-bold text-slate-700">Admin Controls</p><p class="text-slate-500">Host meetings, manage peer links, and monitor network health.</p></div>
-                </div>
-            `;
+                <p class="font-bold text-indigo-600 mb-2">Messenger Commands & Features:</p>
+                <ul class="text-xs space-y-2 text-slate-600">
+                    <li><b>Sidebar:</b> Click contacts to switch chats. Click 'X' to delete specific history.</li>
+                    <li><b>Join Cluster:</b> Use the '+' icon to connect to a new peer via their ID.</li>
+                    <li><b>Video/Audio:</b> Clicking icons copies your ID. Share it so others can join your stream.</li>
+                    <li><b>Join Call:</b> Top-left option. Enter a peer's ID to join their active stream.</li>
+                    <li><b>Privacy:</b> All data is Peer-to-Peer and stored locally in IndexedDB.</li>
+                </ul>`;
             f.appendChild(h); f.scrollTop = f.scrollHeight; document.getElementById('mi').value = '';
         },
-        copyID() { navigator.clipboard.writeText(this.me.id); alert("Node ID copied to clipboard."); }
+        copyID() { navigator.clipboard.writeText(this.me.id); alert("ID copied. Share with peers to connect."); }
     };
 </script>
 </body>
